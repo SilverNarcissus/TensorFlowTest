@@ -41,8 +41,7 @@ cluster = tf.train.ClusterSpec({"ps": ["localhost:2222","localhost:2223"], "work
 server = tf.train.Server(cluster, job_name="work", task_index=2)
 
 # 添加隐藏层1
-# 添加隐藏层1
-with tf.device("/job:ps/replica:0/task:0/device:CPU:0"):
+with tf.device("/job:ps/task:0"):
     xs = tf.placeholder(tf.float32, [None, 4])
     ys = tf.placeholder(tf.float32, [None, 1])
     Weights_1 = tf.get_variable("weights_1", shape=[4, 20],
@@ -50,17 +49,17 @@ with tf.device("/job:ps/replica:0/task:0/device:CPU:0"):
     biases_1 = tf.get_variable("biases_1", shape=[1, 20],
                                initializer=tf.truncated_normal_initializer(stddev=0.1))
 
-with tf.device("/job:work/replica:0/task:0/device:CPU:0"):
+with tf.device("/job:worker/task:0"):
     Wx_plus_b_1 = tf.matmul(xs, Weights_1) + biases_1
     outputs_1 = tf.sigmoid(Wx_plus_b_1)
 # 添加输出层
-with tf.device("/job:ps/replica:0/task:1/device:CPU:0"):
+with tf.device("/job:ps/task:1"):
     Weights_2 = tf.get_variable("weights_2", shape=[20, 1],
                                 initializer=tf.truncated_normal_initializer(stddev=0.1))
     biases_2 = tf.get_variable("biases_2", shape=[1, 1],
                                initializer=tf.truncated_normal_initializer(stddev=0.1))
 
-with tf.device("/job:work/replica:0/task:1/device:CPU:0"):
+with tf.device("/job:worker/task:1"):
     Wx_plus_b_2 = tf.matmul(outputs_1, Weights_2) + biases_2
     outputs_2 = tf.sigmoid(Wx_plus_b_2)
     loss = tf.reduce_mean(tf.reduce_sum(tf.square(ys - outputs_2), reduction_indices=[1]))
@@ -70,7 +69,6 @@ with tf.Session("grpc://localhost:2226") as sess:
     print("here")
     init = tf.global_variables_initializer()  # tensorflow更新后初始化所有变量不再用tf.initialize_all_variables()
     sess.run(init)
-    for _ in range(100):
-        print("here")
+    for _ in range(200):
         sess.run(train_step, {xs: getTrainX(), ys: getTrainY()})
     print(sess.run(outputs_2, {xs: getTestX()}))
