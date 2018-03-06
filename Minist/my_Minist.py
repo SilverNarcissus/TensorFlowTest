@@ -5,6 +5,7 @@ mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
 print(mnist.train.images[0])
 print(mnist.train.labels[0])
 
+
 def add_layer(layerName, inputs, in_size, out_size, activation_function=None):
     # add one more layer and return the output of this layer
     with tf.variable_scope(layerName, reuse=None):
@@ -27,29 +28,32 @@ ys = tf.placeholder(tf.float32, [None, 10])
 # 添加隐藏层1
 l1 = add_layer("layer1", xs, 784, 150, activation_function=tf.sigmoid)
 # 添加隐藏层2
-#l2 = add_layer("layer2", l1, 20, 15, activation_function=tf.sigmoid)
+# l2 = add_layer("layer2", l1, 20, 15, activation_function=tf.sigmoid)
 # 添加输出层
 prediction = add_layer("layer3", l1, 150, 10, activation_function=tf.nn.softmax)
 # MSE 均方误差
-#loss = tf.reduce_mean(tf.reduce_sum(tf.square(ys - prediction), reduction_indices=[1]))
+# loss = tf.reduce_mean(tf.reduce_sum(tf.square(ys - prediction), reduction_indices=[1]))
 loss = -tf.reduce_sum(ys * tf.log(prediction))
 # 优化器选取 学习率设置 此处学习率置为0.1
-train_step = tf.train.GradientDescentOptimizer(0.01).minimize(loss)
+train_step = tf.train.AdamOptimizer(beta2=0.9999).minimize(loss)
 # tensorflow变量初始化，打开会话
-init = tf.global_variables_initializer()  # tensorflow更新后初始化所有变量不再用tf.initialize_all_variables()
-sess = tf.Session()
-sess.run(init)
+# init = tf.global_variables_initializer()  # tensorflow更新后初始化所有变量不再用tf.initialize_all_variables()
 
-for i in range(1000):
-    batch_xs, batch_ys = mnist.train.next_batch(100)
+keep_prob = tf.placeholder(tf.float32)
+
+sess = tf.InteractiveSession()
+tf.global_variables_initializer().run()
+# sess.run(init)
+
+for i in range(3000):
+    batch_xs, batch_ys = mnist.train.next_batch(50)
     print(i)
-    sess.run(train_step, feed_dict={xs: batch_xs, ys: batch_ys})
-
+    train_step.run(feed_dict={xs: batch_xs, ys: batch_ys, keep_prob: 0.7})
 
 correct_prediction = tf.equal(tf.argmax(prediction, 1), tf.argmax(ys, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
 
-print(sess.run(accuracy, feed_dict={xs: mnist.test.images, ys: mnist.test.labels}))
+print(sess.run(accuracy, feed_dict={xs: mnist.test.images, ys: mnist.test.labels, keep_prob: 1}))
 # count = 0
 # for out in sess.run(prediction, {xs : getTestX()}):
 #     if(out[0] > 0.5):
