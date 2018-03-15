@@ -62,6 +62,7 @@ from tensorflow.python.client import device_lib
 
 flags = tf.flags
 logging = tf.logging
+my_output = None
 
 flags.DEFINE_string(
     "model", "test",
@@ -127,13 +128,14 @@ class PTBModel(object):
         softmax_w = tf.get_variable(
             "softmax_w", [size, vocab_size], dtype=data_type())
         softmax_b = tf.get_variable("softmax_b", [vocab_size], dtype=data_type())
-        logits = tf.nn.xw_plus_b(output, softmax_w, softmax_b)
+        self._output = tf.nn.xw_plus_b(output, softmax_w, softmax_b)
         # Reshape logits to be a 3-D tensor for sequence loss
-        logits = tf.reshape(logits, [self.batch_size, self.num_steps, vocab_size])
+        self._output = tf.reshape(self._output, [self.batch_size, self.num_steps, vocab_size])
+        print(input_.targets)
 
         # Use the contrib sequence loss and average over the batches
         loss = tf.contrib.seq2seq.sequence_loss(
-            logits,
+            self._output,
             input_.targets,
             tf.ones([self.batch_size, self.num_steps], dtype=data_type()),
             average_across_timesteps=False,
@@ -242,6 +244,7 @@ class PTBModel(object):
         """Exports ops to collections."""
         self._name = name
         ops = {util.with_prefix(self._name, "cost"): self._cost}
+        ops.update(output=self._output)
         if self._is_training:
             ops.update(lr=self._lr, new_lr=self._new_lr, lr_update=self._lr_update)
             if self._rnn_params:
@@ -269,6 +272,7 @@ class PTBModel(object):
                     rnn_params,
                     base_variable_scope="Model/RNN")
                 tf.add_to_collection(tf.GraphKeys.SAVEABLE_OBJECTS, params_saveable)
+        self._output = tf.get_collection_ref("output")[0]
         self._cost = tf.get_collection_ref(util.with_prefix(self._name, "cost"))[0]
         num_replicas = FLAGS.num_gpus if self._name == "Train" else 1
         self._initial_state = util.import_state_tuples(
@@ -303,6 +307,10 @@ class PTBModel(object):
     @property
     def initial_state_name(self):
         return self._initial_state_name
+
+    @property
+    def output(self):
+        return self._output
 
     @property
     def final_state_name(self):
@@ -383,10 +391,12 @@ def run_epoch(session, model, eval_op=None, verbose=False):
     costs = 0.0
     iters = 0
     state = session.run(model.initial_state)
+    # print(session.run(my_output))
 
     fetches = {
         "cost": model.cost,
         "final_state": model.final_state,
+        "my": model.output
     }
     if eval_op is not None:
         fetches["eval_op"] = eval_op
@@ -398,8 +408,10 @@ def run_epoch(session, model, eval_op=None, verbose=False):
             feed_dict[h] = state[i].h
 
         vals = session.run(fetches, feed_dict)
+
         cost = vals["cost"]
         state = vals["final_state"]
+        # print(vals["my"])
 
         costs += cost
         iters += model.input.num_steps
@@ -510,9 +522,9 @@ def main(_):
             test_perplexity = run_epoch(session, mtest)
             print("Test Perplexity: %.3f" % test_perplexity)
 
-            if FLAGS.save_path:
-                print("Saving model to %s." % FLAGS.save_path)
-                sv.saver.save(session, FLAGS.save_path, global_step=sv.global_step)
+            # if FLAGS.save_path:
+            #     #print("Saving model to %s." % FLAGS.save_path)
+            #     #sv.saver.save(session, FLAGS.save_path, global_step=sv.global_step)
 
 
 if __name__ == "__main__":

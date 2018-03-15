@@ -34,6 +34,3 @@ def getTestY():
         b = np.array([i])
         a = np.row_stack((a, b))
     return np.delete(a, 0, 0)
-
-
-print(getTrainY())
