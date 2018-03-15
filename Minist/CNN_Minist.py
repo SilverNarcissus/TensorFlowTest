@@ -58,6 +58,7 @@ w_conv2 = weight_variable([5, 5, 32, 64])
 b_conv2 = bias_variable([64])
 # 注意h_pool1是上一层的池化结果，#卷积结果14x14x64
 h_conv2 = tf.nn.relu(conv2d(h_pool1, w_conv2) + b_conv2)
+
 # 池化结果7x7x64
 h_pool2 = max_pool_2x2(h_conv2)
 # 原图像尺寸28*28，第一轮图像缩小为14*14，共有32张，第二轮后图像缩小为7*7，共有64张
@@ -110,7 +111,7 @@ saver = tf.train.Saver(max_to_keep=2)
 # get latest file
 ckpt = tf.train.get_checkpoint_state('/Users/SilverNarcissus/PycharmProjects/TensorFlowTest/CNN_MNIST_BEST_MODEL')
 if ckpt and ckpt.model_checkpoint_path:
-    saver.restore(sess, '/Users/SilverNarcissus/PycharmProjects/TensorFlowTest/CNN_MNIST_BEST_MODEL/CNN-500')
+    saver.restore(sess, ckpt.model_checkpoint_path)
 
 tf.summary.scalar("loss", loss)
 merged = tf.summary.merge_all()

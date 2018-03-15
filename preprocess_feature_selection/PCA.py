@@ -1,7 +1,8 @@
 import tensorflow as tf
 from irisData import getTrainX
 import numpy as np
-
+from preprocess_feature_selection.normalization import normalize
+from sklearn import decomposition
 
 class PCA:
     def __init__(self, fit_data, session, keep_k=None, keep_ratio=None):
@@ -54,5 +55,10 @@ class PCA:
 x = tf.constant([[1, 1, 1], [2, 2, 10]], dtype=tf.float32)
 with tf.Session() as sess:
     input_data = tf.constant(getTrainX(), dtype=tf.float32)
-    p = PCA(input_data, sess, keep_ratio=0.95)
-    print(sess.run(p.transfer(input_data)))
+
+    pre_process = normalize(input_data)
+    p = PCA(pre_process, sess, keep_ratio=0.95)
+
+    print(sess.run(input_data))
+    print(sess.run(p.transfer(pre_process)))
+
