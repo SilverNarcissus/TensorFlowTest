@@ -233,7 +233,7 @@ with tf.Session(graph=graph) as session:
 #     plt.savefig(filename, dpi=600)
 
 
-#print(final_embeddings[dictionary['学术']])
+#visualize the result
 exit(0)
 try:
     from sklearn.manifold import TSNE
