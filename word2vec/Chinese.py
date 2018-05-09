@@ -38,7 +38,9 @@ def read_data():
                 line = line.replace(' ', '')
             if len(line) > 0:  # 如果句子非空
                 raw_words = list(jieba.cut(line, cut_all=False))
-                raw_word_list.extend(raw_words)
+                for word in raw_words:
+                    if word not in stop_words:
+                        raw_word_list.append(word)
             line = f.readline()
     return raw_word_list
 
@@ -106,6 +108,13 @@ def generate_batch(batch_size, num_skips, skip_window):
         data_index = (data_index + 1) % len(data)
     return batch, labels
 
+# for test generator
+# batch_inputs, batch_labels = generate_batch(128, 1, 1)
+# print(batch_inputs)
+# print(reverse_dictionary[96], reverse_dictionary[4],reverse_dictionary[97],reverse_dictionary[98])
+# print(reverse_dictionary[33], reverse_dictionary[97],reverse_dictionary[4])
+# print(batch_labels)
+# exit(0)
 
 batch, labels = generate_batch(batch_size=8, num_skips=2, skip_window=1)
 for i in range(8):
@@ -115,7 +124,7 @@ for i in range(8):
 batch_size = 128
 embedding_size = 128
 skip_window = 1
-num_skips = 2
+num_skips = 1
 valid_size = 9  # 切记这个数字要和len(valid_word)对应，要不然会报错哦
 valid_window = 100
 num_sampled = 64  # Number of negative examples to sample.
@@ -152,7 +161,7 @@ with graph.as_default():
                        num_sampled=num_sampled, num_classes=vocabulary_size))
 
     # Construct the SGD optimizer using a learning rate of 1.0.
-    optimizer = tf.train.GradientDescentOptimizer(1.0).minimize(loss)
+    optimizer = tf.train.AdamOptimizer().minimize(loss)
 
     # Compute the cosine similarity between minibatch examples and all embeddings.
     norm = tf.sqrt(tf.reduce_sum(tf.square(embeddings), 1, keep_dims=True))
@@ -164,14 +173,14 @@ with graph.as_default():
     init = tf.global_variables_initializer()
 
 # Step 5: Begin training.
-num_steps = 4000
+num_steps = 10000
 with tf.Session(graph=graph) as session:
     # We must initialize all variables before we use them.
     init.run()
     print("Initialized")
 
     average_loss = 0
-    for step in xrange(num_steps):
+    for step in range(num_steps):
         batch_inputs, batch_labels = generate_batch(batch_size, num_skips, skip_window)
         feed_dict = {train_inputs: batch_inputs, train_labels: batch_labels}
 
@@ -219,6 +228,7 @@ def plot_with_labels(low_dim_embs, labels, filename='tsne.png', fonts=None):
                      va='bottom')
     plt.savefig(filename, dpi=600)
 
+print(final_embeddings[dictionary['学术']])
 
 try:
     from sklearn.manifold import TSNE
@@ -231,7 +241,7 @@ try:
     tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=5000)
     plot_only = 500
     low_dim_embs = tsne.fit_transform(final_embeddings[:plot_only, :])
-    for i in xrange(plot_only):
+    for i in range(plot_only):
         if (i in reverse_dictionary):
             labels = [reverse_dictionary[i]]
             plot_with_labels(low_dim_embs, labels)
