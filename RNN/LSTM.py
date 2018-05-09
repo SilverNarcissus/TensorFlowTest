@@ -64,9 +64,9 @@ flags = tf.flags
 logging = tf.logging
 
 flags.DEFINE_string(
-    "model", "test",
+    "model", "small",
     "A type of model. Possible options are: small, medium, large.")
-flags.DEFINE_string("data_path", "/Users/SilverNarcissus/PycharmProjects/TensorFlowTest/rnn_data/simple-examples/data",
+flags.DEFINE_string("data_path", "D:/TensorFlowTest/rnn_data/simple-examples/data",
                     "Where the training/test data is stored.")
 flags.DEFINE_string("save_path", None,
                     "Model output directory.")
@@ -114,6 +114,7 @@ class PTBModel(object):
         size = config.hidden_size
         vocab_size = config.vocab_size
 
+        print(input_.input_data)
         with tf.device("/cpu:0"):
             embedding = tf.get_variable(
                 "embedding", [vocab_size, size], dtype=data_type())
