@@ -50,7 +50,7 @@ words = read_data()
 print('Data size', len(words))
 
 # Step 2: Build the dictionary and replace rare words with UNK token.
-vocabulary_size = 610
+vocabulary_size = 1000
 
 
 def build_dataset(words):
@@ -107,6 +107,7 @@ def generate_batch(batch_size, num_skips, skip_window):
         buffer.append(data[data_index])
         data_index = (data_index + 1) % len(data)
     return batch, labels
+
 
 # for test generator
 # batch_inputs, batch_labels = generate_batch(128, 1, 1)
@@ -197,7 +198,7 @@ with tf.Session(graph=graph) as session:
             average_loss = 0
 
         # Note that this is expensive (~20% slowdown if computed every 500 steps)
-        if step % 10000 == 0:
+        if step % 8000 == 0:
             sim = similarity.eval()
             for i in xrange(valid_size):
                 valid_word = reverse_dictionary[valid_examples[i]]
@@ -213,38 +214,60 @@ with tf.Session(graph=graph) as session:
 
 
 # Step 6: Visualize the embeddings.
-def plot_with_labels(low_dim_embs, labels, filename='tsne.png', fonts=None):
-    assert low_dim_embs.shape[0] >= len(labels), "More labels than embeddings"
-    plt.figure(figsize=(18, 18))  # in inches
-    for i, label in enumerate(labels):
-        x, y = low_dim_embs[i, :]
-        plt.scatter(x, y)
-        plt.annotate(label,
-                     fontproperties=fonts,
-                     xy=(x, y),
-                     xytext=(5, 2),
-                     textcoords='offset points',
-                     ha='right',
-                     va='bottom')
-    plt.savefig(filename, dpi=600)
+# not use function
+# def plot_with_labels(low_dim_embs, labels, filename='tsne.png', fonts=None):
+#     assert low_dim_embs.shape[0] >= len(labels), "More labels than embeddings"
+#     plt.figure(figsize=(3, 3))  # in inches
+#     for i, label in enumerate(labels):
+#         x, y = low_dim_embs[i, :]
+#         print("before", x, y, i)
+#         plt.scatter(x, y)
+#         print("after")
+#         plt.annotate(label,
+#                      fontproperties=fonts,
+#                      xy=(x, y),
+#                      xytext=(5, 2),
+#                      textcoords='offset points',
+#                      ha='right',
+#                      va='bottom')
+#     plt.savefig(filename, dpi=600)
 
-print(final_embeddings[dictionary['学术']])
 
+#print(final_embeddings[dictionary['学术']])
+exit(0)
 try:
     from sklearn.manifold import TSNE
     import matplotlib.pyplot as plt
     from matplotlib.font_manager import FontProperties
 
     # 为了在图片上能显示出中文
-    #font = FontProperties(fname=r"c:\windows\fonts\simsun.ttc", size=14)
+    # for mac
+    font = FontProperties(fname="/System/Library/Fonts/PingFang.ttc", size=14)
 
     tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=5000)
-    plot_only = 500
+    plot_only = 150
     low_dim_embs = tsne.fit_transform(final_embeddings[:plot_only, :])
+    print("here")
+    plt.figure(figsize=(18, 18))
     for i in range(plot_only):
         if (i in reverse_dictionary):
-            labels = [reverse_dictionary[i]]
-            plot_with_labels(low_dim_embs, labels)
+            label = reverse_dictionary[i]
+            x, y = low_dim_embs[i, :]
+            plt.scatter(x, y)
+            plt.annotate(label,
+                         fontproperties=font,
+                         xy=(x, y),
+                         xytext=(5, 2),
+                         textcoords='offset points',
+                         ha='right',
+                         va='bottom')
+            # plot_with_labels(low_dim_embs, labels)
+
+    #plt.show()
+    plt.savefig('tsne.png', dpi=600)
+    print("finish")
+
+
 
 except ImportError:
     print("Please install sklearn, matplotlib, and scipy to visualize embeddings.")
