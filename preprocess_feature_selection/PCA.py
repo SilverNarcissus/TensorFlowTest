@@ -4,6 +4,7 @@ import numpy as np
 from preprocess_feature_selection.normalization import normalize
 from sklearn import decomposition
 
+
 class PCA:
     def __init__(self, fit_data, session, keep_k=None, keep_ratio=None):
         self._keep_k = keep_k
@@ -18,6 +19,8 @@ class PCA:
             sigma += tf.matmul(tf.transpose(vector), vector)
 
         sigma = sigma / tf.constant(m.value, dtype=tf.float32)
+
+        print(sess.run(sigma))
         s, u, _ = tf.svd(sigma)
         if self.keep_k is None:
             self._get_keep_k(sess.run(s))
@@ -27,7 +30,6 @@ class PCA:
         self._z = sess.run(z)
 
     def _get_keep_k(self, s):
-        print(s)
         s = s / np.sum(s)
         total = 0
         for i in range(len(s)):
@@ -38,6 +40,9 @@ class PCA:
 
     def transfer(self, input_data):
         return tf.matmul(input_data, self.z)
+
+    def reconstruct(self, pca_data):
+        return tf.matmul(pca_data, tf.transpose(self.z))
 
     @property
     def keep_k(self):
@@ -59,6 +64,8 @@ with tf.Session() as sess:
     pre_process = normalize(input_data)
     p = PCA(pre_process, sess, keep_ratio=0.95)
 
-    print(sess.run(input_data))
-    print(sess.run(p.transfer(pre_process)))
+    print(np.cov(sess.run(pre_process), rowvar=False))
 
+    # p2 = decomposition.PCA(n_components=2)
+    # p2.fit()
+    # print(p2.transform(sess.run(pre_process)))

@@ -109,7 +109,7 @@ tf.global_variables_initializer().run()
 
 saver = tf.train.Saver(max_to_keep=2)
 # get latest file
-ckpt = tf.train.get_checkpoint_state('/Users/SilverNarcissus/PycharmProjects/TensorFlowTest/CNN_MNIST_BEST_MODEL')
+ckpt = tf.train.get_checkpoint_state('/Users/SilverNarcissus/PycharmProjects/TensorFlowTest/modelStore')
 if ckpt and ckpt.model_checkpoint_path:
     saver.restore(sess, ckpt.model_checkpoint_path)
 
@@ -117,19 +117,19 @@ tf.summary.scalar("loss", loss)
 merged = tf.summary.merge_all()
 writer = tf.summary.FileWriter("./logs", sess.graph)
 
-# for i in range(200):
-#     batch = mnist.train.next_batch(50)
-#     if i % 20 == 0:
-#         train_accuracy = accuracy.eval(feed_dict={xs: batch[0], ys: batch[1], keep_prob: 1.0})
-#
-#         print(W_conv1.shape)
-#         # print(W_conv1.eval())
-#         # print((conv2d(x_image, W_conv1) + b_conv1).eval(feed_dict={xs: batch[0], ys: batch[1], keep_prob: 1.0}))
-#         print("step %d, training accuracy %g" % (i, train_accuracy))
-#     if i > 0 and i % 100 == 0:
-#         saver.save(sess, "/Users/SilverNarcissus/PycharmProjects/TensorFlowTest/modelStore/CNN", global_step=i)
-#
-#     _, summary = sess.run([train_step, merged], feed_dict={xs: batch[0], ys: batch[1], keep_prob: 0.4})
-#     writer.add_summary(summary, i)
+for i in range(201):
+    batch = mnist.train.next_batch(50)
+    if i % 20 == 0:
+        train_accuracy = accuracy.eval(feed_dict={xs: batch[0], ys: batch[1], keep_prob: 1.0})
+
+        print(W_conv1.shape)
+        # print(W_conv1.eval())
+        # print((conv2d(x_image, W_conv1) + b_conv1).eval(feed_dict={xs: batch[0], ys: batch[1], keep_prob: 1.0}))
+        print("step %d, training accuracy %g" % (i, train_accuracy))
+    if i > 0 and i % 100 == 0:
+        saver.save(sess, "/Users/SilverNarcissus/PycharmProjects/TensorFlowTest/modelStore/CNN", global_step=i)
+
+    _, summary = sess.run([train_step, merged], feed_dict={xs: batch[0], ys: batch[1], keep_prob: 0.5})
+    writer.add_summary(summary, i)
 
 print("test accuracy %g" % accuracy.eval(feed_dict={xs: mnist.test.images, ys: mnist.test.labels, keep_prob: 1.0}))

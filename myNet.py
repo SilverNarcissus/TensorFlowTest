@@ -38,6 +38,7 @@ sess = tf.Session()
 sess.run(init)
 
 for i in range(1000):
+    print(getTrainX())
     sess.run(train_step, {xs: getTrainX(), ys: getTrainY()})
 
 print(sess.run(prediction, {xs : getTestX()}))
