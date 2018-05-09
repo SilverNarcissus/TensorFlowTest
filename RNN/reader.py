@@ -29,11 +29,11 @@ Py3 = sys.version_info[0] == 3
 
 
 def _read_words(filename):
-    with tf.gfile.GFile(filename, "r") as f:
+    with open(filename, "r") as f:
         if Py3:
-            return f.read().replace("\n", "<eos>").split()
+            return f.read().replace("\r\n", "<eos>").split()
         else:
-            return f.read().decode("utf-8").replace("\n", "<eos>").split()
+            return f.read().decode("utf-8").replace("\r\n", "<eos>").split()
 
 
 def _build_vocab(filename):
