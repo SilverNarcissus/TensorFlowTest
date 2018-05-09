@@ -13,7 +13,9 @@ model = tf.nn.softmax(evidence)
 
 y_ = tf.placeholder("float", [None, 10])
 cross_entropy = -tf.reduce_sum(y_ * tf.log(model))
-train_step = tf.train.GradientDescentOptimizer(0.01).minimize(cross_entropy)
+train_step = tf.train.AdamOptimizer(beta2=0.9999).minimize(cross_entropy)
+
+result = tf.argmax(model, 1)
 
 init = tf.initialize_all_variables()
 
@@ -28,3 +30,8 @@ correct_prediction = tf.equal(tf.argmax(model, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
 
 print(sess.run(accuracy, feed_dict={x: mnist.test.images, y_: mnist.test.labels}))
+
+batch_xs, batch_ys = mnist.test.next_batch(5)
+print(sess.run(result, feed_dict={x: batch_xs, y_: batch_ys}))
+print(batch_ys)
+

@@ -58,6 +58,7 @@ w_conv2 = weight_variable([5, 5, 32, 64])
 b_conv2 = bias_variable([64])
 # 注意h_pool1是上一层的池化结果，#卷积结果14x14x64
 h_conv2 = tf.nn.relu(conv2d(h_pool1, w_conv2) + b_conv2)
+
 # 池化结果7x7x64
 h_pool2 = max_pool_2x2(h_conv2)
 # 原图像尺寸28*28，第一轮图像缩小为14*14，共有32张，第二轮后图像缩小为7*7，共有64张
@@ -86,26 +87,49 @@ y_conv = tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
 # 四，定义loss(最小误差概率)，选定优化优化loss，
 cross_entropy = -tf.reduce_sum(ys * tf.log(y_conv))  # 定义交叉熵为loss函数
-train_step = tf.train.AdamOptimizer(beta2=0.9999).minimize(cross_entropy)  # 调用优化器优化，其实就是通过喂数据争取cross_entropy最小化
+
+tf.add_to_collection(tf.GraphKeys.WEIGHTS, W_fc1)
+tf.add_to_collection(tf.GraphKeys.WEIGHTS, W_fc2)
+tf.add_to_collection(tf.GraphKeys.WEIGHTS, W_conv1)
+tf.add_to_collection(tf.GraphKeys.WEIGHTS, w_conv2)
+regularizer = tf.contrib.layers.l2_regularizer(scale=0.001)
+reg_term = tf.contrib.layers.apply_regularization(regularizer)
+loss = cross_entropy + reg_term
+
+train_step = tf.train.AdamOptimizer(beta2=0.9999).minimize(loss)  # 调用优化器优化，其实就是通过喂数据争取cross_entropy最小化
 
 # 五，开始数据训练以及评测
 correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(ys, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 tf.global_variables_initializer().run()
 
-#print(b_conv1.eval())
-#print((conv2d(x_image, W_conv1).shape))
-#print(b_conv1.shape)
+# print(b_conv1.eval())
+# print((conv2d(x_image, W_conv1).shape))
+# print(b_conv1.shape)
 
-for i in range(501):
-    batch = mnist.train.next_batch(50)
-    if i % 20 == 0:
-        train_accuracy = accuracy.eval(feed_dict={xs: batch[0], ys: batch[1], keep_prob: 1.0})
-        print(W_conv1.shape)
-        #print(W_conv1.eval())
-        #print((conv2d(x_image, W_conv1) + b_conv1).eval(feed_dict={xs: batch[0], ys: batch[1], keep_prob: 1.0}))
-        print("step %d, training accuracy %g" % (i, train_accuracy))
+saver = tf.train.Saver(max_to_keep=2)
+# get latest file
+ckpt = tf.train.get_checkpoint_state('/Users/SilverNarcissus/PycharmProjects/TensorFlowTest/CNN_MNIST_BEST_MODEL')
+if ckpt and ckpt.model_checkpoint_path:
+    saver.restore(sess, ckpt.model_checkpoint_path)
 
-    train_step.run(feed_dict={xs: batch[0], ys: batch[1], keep_prob : 0.5})
+tf.summary.scalar("loss", loss)
+merged = tf.summary.merge_all()
+writer = tf.summary.FileWriter("./logs", sess.graph)
+
+# for i in range(200):
+#     batch = mnist.train.next_batch(50)
+#     if i % 20 == 0:
+#         train_accuracy = accuracy.eval(feed_dict={xs: batch[0], ys: batch[1], keep_prob: 1.0})
+#
+#         print(W_conv1.shape)
+#         # print(W_conv1.eval())
+#         # print((conv2d(x_image, W_conv1) + b_conv1).eval(feed_dict={xs: batch[0], ys: batch[1], keep_prob: 1.0}))
+#         print("step %d, training accuracy %g" % (i, train_accuracy))
+#     if i > 0 and i % 100 == 0:
+#         saver.save(sess, "/Users/SilverNarcissus/PycharmProjects/TensorFlowTest/modelStore/CNN", global_step=i)
+#
+#     _, summary = sess.run([train_step, merged], feed_dict={xs: batch[0], ys: batch[1], keep_prob: 0.4})
+#     writer.add_summary(summary, i)
 
 print("test accuracy %g" % accuracy.eval(feed_dict={xs: mnist.test.images, ys: mnist.test.labels, keep_prob: 1.0}))
