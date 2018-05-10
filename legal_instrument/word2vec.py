@@ -44,7 +44,7 @@ def get_fact():
     result = []
     with open(constant.DATA_TRAIN, "r", encoding="UTF-8") as f:
         line = f.readline()
-        for i in range(10000):
+        for i in range(10):
             obj = json.loads(line)
             raw_words = list(jieba.cut(obj['fact'], cut_all=False))
             for word in raw_words:
