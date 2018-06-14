@@ -24,7 +24,7 @@ class PCA:
         s, u, _ = tf.svd(sigma)
         if self.keep_k is None:
             self._get_keep_k(sess.run(s))
-            print(self.keep_k)
+            print(u.shape)
 
         z = tf.strided_slice(u, [0, 0], [n, self.keep_k])
         self._z = sess.run(z)
@@ -66,6 +66,7 @@ with tf.Session() as sess:
 
     print(np.cov(sess.run(pre_process), rowvar=False))
 
-    # p2 = decomposition.PCA(n_components=2)
-    # p2.fit()
-    # print(p2.transform(sess.run(pre_process)))
+    p2 = decomposition.PCA(n_components=2)
+    p2.fit(sess.run(pre_process))
+    print(sess.run(p.transfer(sess.run(pre_process))))
+    print(p2.transform(sess.run(pre_process)))

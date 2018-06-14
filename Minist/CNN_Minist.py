@@ -1,7 +1,7 @@
 from tensorflow.examples.tutorials.mnist import input_data
 import tensorflow as tf
 
-mnist = input_data.read_data_sets("../MNIST_data/", one_hot=True)  # 读取图片数据集
+mnist = input_data.read_data_sets("./MNIST_data/", one_hot=True)  # 读取图片数据集
 sess = tf.InteractiveSession()  # 创建session
 
 
